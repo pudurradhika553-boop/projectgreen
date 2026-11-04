@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0f766e;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #134e4a;
+  --color-secondary-foreground: #ffffff;
+  --font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  color: #0f172a;
+  background: #f8fafc;
+  font-family: var(--font-family);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
