@@ -14,6 +14,7 @@ type TicketType = {
 
 export default function RegisterPage() {
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
+  const [loadingTypes, setLoadingTypes] = useState(true);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
   const [error, setError] = useState("");
@@ -31,15 +32,15 @@ export default function RegisterPage() {
     fetch("/api/ticket-types")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setTicketTypes(data.filter((t: TicketType) => !t.requiresInvite));
-          if (data.length > 0) {
-            const open = data.find((t: TicketType) => !t.requiresInvite);
-            if (open) setForm((f) => ({ ...f, ticketTypeId: open.id }));
-          }
+        if (Array.isArray(data) && data.length > 0) {
+          const open = data.filter((t: TicketType) => !t.requiresInvite);
+          setTicketTypes(open.length > 0 ? open : data);
+          const first = open[0] || data[0];
+          if (first) setForm((f) => ({ ...f, ticketTypeId: first.id }));
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingTypes(false));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -174,7 +175,9 @@ export default function RegisterPage() {
             />
           </div>
 
-          {ticketTypes.length > 0 && (
+          {loadingTypes ? (
+            <p className="text-sm text-slate-500">Loading ticket options…</p>
+          ) : ticketTypes.length > 0 ? (
             <div>
               <label className="block text-sm font-medium text-slate-700">Ticket Type</label>
               <select
@@ -189,6 +192,10 @@ export default function RegisterPage() {
                 ))}
               </select>
             </div>
+          ) : (
+            <p className="text-sm text-amber-700 bg-amber-50 rounded-md px-3 py-2">
+              Ticket type will be assigned automatically (General Attendee Pass).
+            </p>
           )}
 
           {error && (

@@ -19,27 +19,55 @@ export async function POST(req: NextRequest) {
       designation,
       city,
       country,
-      ticketTypeId,
+      ticketTypeId: incomingTicketTypeId,
     } = body;
 
-    if (!fullName || !email || !ticketTypeId) {
+    if (!fullName || !email) {
       return NextResponse.json(
-        { error: "Full name, email and ticket type are required." },
+        { error: "Full name and email are required." },
         { status: 400 }
       );
     }
 
-    const event = await prisma.event.findFirst({ where: { isPublished: true } });
+    let event = await prisma.event.findFirst({ where: { isPublished: true } });
     if (!event) {
-      return NextResponse.json({ error: "No published event found." }, { status: 404 });
+      event = await prisma.event.findFirst();
+    }
+    if (!event) {
+      return NextResponse.json({ error: "No event found. Please run setup first." }, { status: 404 });
     }
 
-    const ticketType = await prisma.ticketType.findFirst({
-      where: { id: ticketTypeId, eventId: event.id, isOpen: true },
-    });
-    if (!ticketType) {
-      return NextResponse.json({ error: "Invalid or closed ticket type." }, { status: 400 });
+    // Resolve ticket type: use provided id, or fall back to first open type, or create default
+    let ticketType = null;
+    if (incomingTicketTypeId) {
+      ticketType = await prisma.ticketType.findFirst({
+        where: { id: incomingTicketTypeId, eventId: event.id, isOpen: true },
+      });
     }
+
+    if (!ticketType) {
+      ticketType = await prisma.ticketType.findFirst({
+        where: { eventId: event.id, isOpen: true, requiresInvite: false },
+        orderBy: { sortOrder: "asc" },
+      });
+    }
+
+    if (!ticketType) {
+      ticketType = await prisma.ticketType.create({
+        data: {
+          eventId: event.id,
+          name: "General Attendee Pass",
+          description: "Access to all exhibition areas, talks and networking sessions.",
+          price: 100,
+          currency: "INR",
+          isOpen: true,
+          requiresInvite: false,
+          sortOrder: 1,
+        },
+      });
+    }
+
+    const ticketTypeId = ticketType.id;
 
     // Duplicate check
     const existing = await prisma.registration.findFirst({
