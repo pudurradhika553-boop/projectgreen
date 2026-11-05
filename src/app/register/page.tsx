@@ -15,6 +15,7 @@ type TicketType = {
 export default function RegisterPage() {
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
+  const [noEvent, setNoEvent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
   const [error, setError] = useState("");
@@ -37,9 +38,15 @@ export default function RegisterPage() {
           setTicketTypes(open.length > 0 ? open : data);
           const first = open[0] || data[0];
           if (first) setForm((f) => ({ ...f, ticketTypeId: first.id }));
+          setNoEvent(false);
+        } else {
+          // Empty array usually means no event exists yet
+          setNoEvent(true);
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        setNoEvent(true);
+      })
       .finally(() => setLoadingTypes(false));
   }, []);
 
@@ -92,6 +99,42 @@ export default function RegisterPage() {
                 ← Back to home
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show clear setup prompt when no event exists
+  if (!loadingTypes && noEvent) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <header className="border-b border-slate-200 bg-white">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+            <Link href="/" className="text-lg font-semibold text-teal-800">
+              GreenRise Expo 2027
+            </Link>
+            <Link href="/" className="text-sm text-slate-600 hover:text-teal-700">
+              ← Home
+            </Link>
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-lg px-4 py-16 text-center">
+          <div className="rounded-lg border border-amber-200 bg-white p-8 shadow-sm">
+            <h1 className="text-2xl font-bold text-slate-900">Setup required</h1>
+            <p className="mt-3 text-slate-600">
+              No event has been created yet. Please run the initial setup to create the Super Admin account and the event.
+            </p>
+            <Link
+              href="/setup"
+              className="mt-6 inline-block rounded-md bg-teal-700 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-800"
+            >
+              Go to Setup →
+            </Link>
+            <p className="mt-4 text-xs text-slate-400">
+              After setup you will be able to register attendees here.
+            </p>
           </div>
         </div>
       </div>
