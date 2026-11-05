@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!superAdminRole) {
+      // Create role if seed hasn't run
       await prisma.role.create({
         data: { name: "SUPER_ADMIN", description: "Full system access" },
       });

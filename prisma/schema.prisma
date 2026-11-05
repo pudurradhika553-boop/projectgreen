@@ -8,6 +8,8 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
+// ==================== AUTH & RBAC ====================
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -19,6 +21,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
+
   roles         UserRole[]
   checkIns      CheckIn[]  @relation("CheckedInBy")
   auditLogs     AuditLog[]
@@ -27,35 +30,43 @@ model User {
 
 model Role {
   id          String   @id @default(cuid())
-  name        String   @unique
+  name        String   @unique // SUPER_ADMIN, EVENT_MANAGER, etc.
   description String?
   createdAt   DateTime @default(now())
+
   users       UserRole[]
   permissions RolePermission[]
 }
 
 model Permission {
   id          String @id @default(cuid())
-  key         String @unique
+  key         String @unique // e.g. "registrations:read", "emails:send"
   description String?
+
   roles RolePermission[]
 }
 
 model RolePermission {
   roleId       String
   permissionId String
+
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
   @@id([roleId, permissionId])
 }
 
 model UserRole {
   userId String
   roleId String
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
   @@id([userId, roleId])
 }
+
+// ==================== EVENT CONFIG ====================
 
 model Event {
   id              String   @id @default(cuid())
@@ -86,6 +97,7 @@ model Event {
   isPublished     Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
   pages           EventPage[]
   ticketTypes     TicketType[]
   registrations   Registration[]
@@ -103,33 +115,38 @@ model Event {
 model EventPage {
   id          String   @id @default(cuid())
   eventId     String
-  slug        String
+  slug        String   // home, about, agenda, speakers, sponsors, venue, register, contact, privacy, terms
   title       String
-  content     String?  @db.Text
+  content     String?  @db.Text // JSON or rich text
   isEnabled   Boolean  @default(true)
   sortOrder   Int      @default(0)
   metaTitle   String?
   metaDesc    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, slug])
 }
+
+// ==================== TICKETING & REGISTRATION ====================
 
 model TicketType {
   id              String   @id @default(cuid())
   eventId         String
-  name            String
+  name            String   // General Attendee, Exhibitor, VIP, etc.
   description     String?  @db.Text
   price           Decimal  @default(0) @db.Decimal(10, 2)
   currency        String   @default("INR")
   capacity        Int?
   isOpen          Boolean  @default(true)
   requiresInvite  Boolean  @default(false)
-  formConfig      Json?
+  formConfig      Json?    // Dynamic form field overrides
   sortOrder       Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
   event           Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   registrations   Registration[]
   spocAssignments SpocAssignment[]
@@ -138,16 +155,18 @@ model TicketType {
 model RegistrationFormField {
   id          String   @id @default(cuid())
   eventId     String
-  ticketTypeId String?
+  ticketTypeId String? // null = applies to all
   key         String
   label       String
-  type        String
-  options     Json?
+  type        String   // text, email, phone, select, radio, checkbox, textarea, file
+  options     Json?    // for select/radio/checkbox
   isRequired  Boolean  @default(false)
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
-  conditional Json?
+  conditional Json?    // simple conditional logic
+
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, key, ticketTypeId])
 }
 
@@ -155,7 +174,7 @@ model Registration {
   id              String   @id @default(cuid())
   eventId         String
   ticketTypeId    String
-  registrationId  String   @unique
+  registrationId  String   @unique // human readable e.g. GRE-2027-0001
   fullName        String
   email           String
   phone           String?
@@ -163,14 +182,16 @@ model Registration {
   designation     String?
   city            String?
   country         String?
-  status          String   @default("confirmed")
-  answers         Json?
+  status          String   @default("confirmed") // pending, confirmed, cancelled, checked_in
+  answers         Json?    // custom form answers
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
   event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   ticketType  TicketType @relation(fields: [ticketTypeId], references: [id])
   ticket      Ticket?
   checkIns    CheckIn[]
+
   @@unique([eventId, email, ticketTypeId])
   @@index([email])
   @@index([registrationId])
@@ -180,11 +201,12 @@ model Ticket {
   id              String   @id @default(cuid())
   registrationId  String   @unique
   ticketNumber    String   @unique
-  qrToken         String   @unique
+  qrToken         String   @unique // secure random token for verification
   qrCodeDataUrl   String?  @db.Text
-  status          String   @default("valid")
+  status          String   @default("valid") // valid, used, cancelled, expired
   issuedAt        DateTime @default(now())
   expiresAt       DateTime?
+
   registration Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
   checkIns     CheckIn[]
 }
@@ -197,10 +219,13 @@ model CheckIn {
   checkedInAt    DateTime @default(now())
   notes          String?
   isManual       Boolean  @default(false)
+
   ticket       Ticket       @relation(fields: [ticketId], references: [id])
   registration Registration @relation(fields: [registrationId], references: [id])
   checkedInBy  User?        @relation("CheckedInBy", fields: [checkedInById], references: [id])
 }
+
+// ==================== PEOPLE & ENTITIES ====================
 
 model Speaker {
   id          String   @id @default(cuid())
@@ -216,6 +241,7 @@ model Speaker {
   isFeatured  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
@@ -225,11 +251,12 @@ model Sponsor {
   name        String
   logoUrl     String?
   websiteUrl  String?
-  tier        String?
+  tier        String?  // Platinum, Gold, Silver, etc.
   description String?  @db.Text
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
@@ -246,6 +273,7 @@ model Exhibitor {
   category    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   stalls Stall[]
 }
@@ -258,10 +286,11 @@ model Stall {
   category    String?
   location    String?
   size        String?
-  status      String   @default("available")
+  status      String   @default("available") // available, allocated, reserved
   notes       String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   exhibitor Exhibitor? @relation(fields: [exhibitorId], references: [id])
 }
@@ -269,7 +298,7 @@ model Stall {
 model Spoc {
   id              String   @id @default(cuid())
   eventId         String
-  userId          String?
+  userId          String?  // optional link to User
   name            String
   designation     String?
   department      String?
@@ -281,6 +310,7 @@ model Spoc {
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
   event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user        User?            @relation("SpocUser", fields: [userId], references: [id])
   assignments SpocAssignment[]
@@ -290,10 +320,14 @@ model SpocAssignment {
   id           String @id @default(cuid())
   spocId       String
   ticketTypeId String
+
   spoc       Spoc       @relation(fields: [spocId], references: [id], onDelete: Cascade)
   ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
   @@unique([spocId, ticketTypeId])
 }
+
+// ==================== EMAIL & REMINDERS ====================
 
 model EmailTemplate {
   id        String   @id @default(cuid())
@@ -302,10 +336,11 @@ model EmailTemplate {
   subject   String
   bodyHtml  String   @db.Text
   bodyText  String?  @db.Text
-  type      String
+  type      String   // confirmation, reminder, campaign, custom
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
@@ -315,11 +350,12 @@ model EmailCampaign {
   name        String
   subject     String
   bodyHtml    String   @db.Text
-  status      String   @default("draft")
+  status      String   @default("draft") // draft, scheduled, sending, sent, failed
   scheduledAt DateTime?
   sentAt      DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   recipients EmailRecipient[]
   logs       EmailLog[]
 }
@@ -329,9 +365,10 @@ model EmailRecipient {
   campaignId String
   email      String
   name       String?
-  status     String  @default("pending")
+  status     String  @default("pending") // pending, sent, failed, bounced
   sentAt     DateTime?
   error      String?
+
   campaign EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 }
 
@@ -341,9 +378,10 @@ model EmailLog {
   toEmail    String
   subject    String
   status     String
-  providerId String?
+  providerId String?  // Resend message id
   error      String?
   createdAt  DateTime @default(now())
+
   campaign EmailCampaign? @relation(fields: [campaignId], references: [id])
 }
 
@@ -355,12 +393,15 @@ model Reminder {
   bodyHtml    String   @db.Text
   scheduledAt DateTime
   timezone    String   @default("Asia/Kolkata")
-  status      String   @default("scheduled")
+  status      String   @default("scheduled") // scheduled, sent, cancelled, failed
   sentAt      DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
+
+// ==================== MEDIA & AUDIT ====================
 
 model MediaAsset {
   id        String   @id @default(cuid())
@@ -371,6 +412,7 @@ model MediaAsset {
   size      Int?
   altText   String?
   createdAt DateTime @default(now())
+
   event Event? @relation(fields: [eventId], references: [id])
 }
 
@@ -383,5 +425,6 @@ model AuditLog {
   details    Json?
   ipAddress  String?
   createdAt  DateTime @default(now())
+
   user User? @relation(fields: [userId], references: [id])
 }

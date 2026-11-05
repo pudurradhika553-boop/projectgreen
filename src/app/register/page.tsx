@@ -17,7 +17,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
   const [error, setError] = useState("");
-  const [typesLoading, setTypesLoading] = useState(true);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -32,29 +31,21 @@ export default function RegisterPage() {
     fetch("/api/ticket-types")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const open = data.filter((t: TicketType) => !t.requiresInvite);
-          setTicketTypes(open.length > 0 ? open : data);
-          const defaultType = open[0] || data[0];
-          if (defaultType) {
-            setForm((f) => ({ ...f, ticketTypeId: defaultType.id }));
+        if (Array.isArray(data)) {
+          setTicketTypes(data.filter((t: TicketType) => !t.requiresInvite));
+          if (data.length > 0) {
+            const open = data.find((t: TicketType) => !t.requiresInvite);
+            if (open) setForm((f) => ({ ...f, ticketTypeId: open.id }));
           }
         }
       })
-      .catch(() => {})
-      .finally(() => setTypesLoading(false));
+      .catch(() => {});
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    if (!form.fullName.trim() || !form.email.trim()) {
-      setError("Full name and email are required.");
-      setLoading(false);
-      return;
-    }
 
     try {
       const res = await fetch("/api/register", {
@@ -83,20 +74,11 @@ export default function RegisterPage() {
           <div className="rounded-lg border border-green-200 bg-white p-8 text-center shadow-sm">
             <h1 className="text-2xl font-bold text-green-800">Registration Successful</h1>
             <p className="mt-3 text-slate-600">
-              Thank you for registering. A confirmation email has been sent (if email is configured).
+              Thank you for registering. A confirmation email has been sent.
             </p>
             <div className="mt-6 space-y-2 rounded-md bg-slate-50 p-4 text-left text-sm">
-              <div>
-                <span className="font-medium">Registration ID:</span> {success.registrationId}
-              </div>
-              <div>
-                <span className="font-medium">Ticket Number:</span> {success.ticketNumber}
-              </div>
-              {success.ticketType && (
-                <div>
-                  <span className="font-medium">Ticket Type:</span> {success.ticketType}
-                </div>
-              )}
+              <div><span className="font-medium">Registration ID:</span> {success.registrationId}</div>
+              <div><span className="font-medium">Ticket Number:</span> {success.ticketNumber}</div>
             </div>
             <Link
               href={success.verifyUrl}
@@ -115,11 +97,6 @@ export default function RegisterPage() {
     );
   }
 
-  const selectedType = ticketTypes.find((t) => t.id === form.ticketTypeId);
-  const priceLabel = selectedType
-    ? `${selectedType.name}${selectedType.price > 0 ? ` – ₹${selectedType.price}` : ""}`
-    : "General Attendee Pass – ₹100";
-
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
@@ -136,7 +113,7 @@ export default function RegisterPage() {
       <div className="mx-auto max-w-lg px-4 py-12">
         <h1 className="text-2xl font-bold text-slate-900">Register for the Expo</h1>
         <p className="mt-2 text-sm text-slate-500">
-          {priceLabel}. Fill in your details below.
+          General Attendee Pass – ₹100. Fill in your details below.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -148,7 +125,6 @@ export default function RegisterPage() {
               value={form.fullName}
               onChange={(e) => setForm({ ...form, fullName: e.target.value })}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
-              placeholder="Your full name"
             />
           </div>
           <div>
@@ -159,7 +135,6 @@ export default function RegisterPage() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
-              placeholder="you@example.com"
             />
           </div>
           <div>
@@ -169,13 +144,10 @@ export default function RegisterPage() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
-              placeholder="10-digit mobile number"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Organization / College
-            </label>
+            <label className="block text-sm font-medium text-slate-700">Organization / College</label>
             <input
               type="text"
               value={form.organization}
@@ -184,9 +156,7 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Designation / Course
-            </label>
+            <label className="block text-sm font-medium text-slate-700">Designation / Course</label>
             <input
               type="text"
               value={form.designation}
@@ -204,9 +174,9 @@ export default function RegisterPage() {
             />
           </div>
 
-          {ticketTypes.length > 1 && (
+          {ticketTypes.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-slate-700">Ticket Type *</label>
+              <label className="block text-sm font-medium text-slate-700">Ticket Type</label>
               <select
                 value={form.ticketTypeId}
                 onChange={(e) => setForm({ ...form, ticketTypeId: e.target.value })}
@@ -214,8 +184,7 @@ export default function RegisterPage() {
               >
                 {ticketTypes.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name}
-                    {t.price > 0 ? ` – ₹${t.price}` : ""}
+                    {t.name} {t.price > 0 ? `– ₹${t.price}` : ""}
                   </option>
                 ))}
               </select>
@@ -228,7 +197,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={loading || typesLoading}
+            disabled={loading}
             className="w-full rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
           >
             {loading ? "Submitting…" : "Complete Registration"}

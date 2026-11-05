@@ -42,6 +42,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="text-lg font-semibold tracking-tight text-teal-800">
@@ -60,6 +61,7 @@ export default async function HomePage() {
         </div>
       </header>
 
+      {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white">
         <div className="mx-auto max-w-6xl px-4 py-24 md:py-32">
           <p className="mb-3 text-sm font-medium uppercase tracking-widest text-teal-200">
@@ -102,6 +104,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* About snippet */}
       <section className="mx-auto max-w-6xl px-4 py-16">
         <h2 className="text-2xl font-bold text-slate-900">About the Expo</h2>
         <p className="mt-4 max-w-3xl text-slate-600 leading-relaxed">
@@ -114,6 +117,7 @@ export default async function HomePage() {
         </Link>
       </section>
 
+      {/* Speakers preview */}
       {event?.speakers && event.speakers.length > 0 && (
         <section className="border-t border-slate-200 bg-white py-16">
           <div className="mx-auto max-w-6xl px-4">
@@ -136,6 +140,7 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Sponsors preview */}
       {event?.sponsors && event.sponsors.length > 0 && (
         <section className="border-t border-slate-200 py-16">
           <div className="mx-auto max-w-6xl px-4">
@@ -151,6 +156,7 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* CTA */}
       <section className="bg-teal-900 py-16 text-white">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <h2 className="text-2xl font-bold">Ready to be part of the change?</h2>
@@ -164,6 +170,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-10">
         <div className="mx-auto max-w-6xl px-4 text-sm text-slate-500">
           <div className="flex flex-col gap-4 md:flex-row md:justify-between">

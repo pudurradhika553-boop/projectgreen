@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database...");
 
+  // Roles
   const roles = [
     { name: "SUPER_ADMIN", description: "Full system access" },
     { name: "EVENT_MANAGER", description: "Manage event content and registrations" },
@@ -24,6 +25,7 @@ async function main() {
     });
   }
 
+  // Basic permissions
   const permissions = [
     { key: "event:read", description: "View event configuration" },
     { key: "event:write", description: "Edit event configuration" },
@@ -43,6 +45,7 @@ async function main() {
     });
   }
 
+  // Super Admin role gets all permissions
   const superAdminRole = await prisma.role.findUnique({ where: { name: "SUPER_ADMIN" } });
   const allPerms = await prisma.permission.findMany();
   if (superAdminRole) {
@@ -57,6 +60,7 @@ async function main() {
     }
   }
 
+  // Create the GreenRise Expo event
   const event = await prisma.event.upsert({
     where: { id: "greenrise-2027" },
     update: {},
@@ -89,7 +93,8 @@ async function main() {
     },
   });
 
-  await prisma.ticketType.upsert({
+  // Ticket types
+  const generalTicket = await prisma.ticketType.upsert({
     where: { id: "ticket-general" },
     update: {},
     create: {
@@ -121,6 +126,37 @@ async function main() {
     },
   });
 
+  // Default form fields
+  const formFields = [
+    { key: "fullName", label: "Full Name", type: "text", isRequired: true, sortOrder: 1 },
+    { key: "email", label: "Email Address", type: "email", isRequired: true, sortOrder: 2 },
+    { key: "phone", label: "Mobile Number", type: "phone", isRequired: true, sortOrder: 3 },
+    { key: "organization", label: "Organization / College", type: "text", isRequired: false, sortOrder: 4 },
+    { key: "designation", label: "Designation / Course", type: "text", isRequired: false, sortOrder: 5 },
+    { key: "city", label: "City", type: "text", isRequired: false, sortOrder: 6 },
+  ];
+
+  for (const f of formFields) {
+    await prisma.registrationFormField.upsert({
+      where: {
+        eventId_key_ticketTypeId: {
+          eventId: event.id,
+          key: f.key,
+          ticketTypeId: null as any,
+        },
+      },
+      update: {},
+      create: {
+        eventId: event.id,
+        ticketTypeId: null,
+        ...f,
+      },
+    }).catch(() => {
+      // ignore unique constraint if already exists
+    });
+  }
+
+  // Pages
   const pages = [
     { slug: "home", title: "Home", sortOrder: 1 },
     { slug: "about", title: "About the Event", sortOrder: 2 },
@@ -148,6 +184,7 @@ async function main() {
     });
   }
 
+  // Sample speakers
   const speakers = [
     { name: "Dr. Raghunath Mashelkar", title: "Renowned Scientist & Innovation Leader", sortOrder: 1, isFeatured: true },
     { name: "Anand Chordia", title: "Entrepreneur & Industry Leader", sortOrder: 2, isFeatured: true },
@@ -160,6 +197,7 @@ async function main() {
     }).catch(() => {});
   }
 
+  // Sample sponsors
   const sponsors = [
     { name: "Pune Municipal Corporation", tier: "Title", sortOrder: 1 },
     { name: "Mahindra & Mahindra", tier: "Platinum", sortOrder: 2 },
@@ -173,6 +211,7 @@ async function main() {
     }).catch(() => {});
   }
 
+  // Sample SPOC
   await prisma.spoc.create({
     data: {
       eventId: event.id,
@@ -187,6 +226,7 @@ async function main() {
     },
   }).catch(() => {});
 
+  // Confirmation email template
   await prisma.emailTemplate.create({
     data: {
       eventId: event.id,

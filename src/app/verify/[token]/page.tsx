@@ -31,6 +31,7 @@ export default async function VerifyPage({
   const event = reg.event;
   const isCheckedIn = ticket.checkIns.length > 0 || ticket.status === "used";
 
+  // Find SPOC
   const assignment = await prisma.spocAssignment.findFirst({
     where: { ticketTypeId: reg.ticketTypeId },
     include: { spoc: true },
