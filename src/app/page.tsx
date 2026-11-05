@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
 
 async function getEvent() {
@@ -61,9 +62,19 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white">
-        <div className="mx-auto max-w-6xl px-4 py-24 md:py-32">
+      {/* Hero with background image */}
+      <section className="relative overflow-hidden text-white">
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1920&q=80"
+            alt="Green sustainable landscape"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-900/90 via-teal-800/85 to-emerald-900/90" />
+        </div>
+        <div className="relative mx-auto max-w-6xl px-4 py-24 md:py-32">
           <p className="mb-3 text-sm font-medium uppercase tracking-widest text-teal-200">
             {tagline}
           </p>
@@ -82,7 +93,7 @@ export default async function HomePage() {
             </Link>
             <Link
               href="/about"
-              className="rounded-md border border-teal-400 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-800"
+              className="rounded-md border border-teal-400 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-800/50"
             >
               Learn More
             </Link>
@@ -104,17 +115,67 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* About snippet */}
+      {/* About snippet with image */}
       <section className="mx-auto max-w-6xl px-4 py-16">
-        <h2 className="text-2xl font-bold text-slate-900">About the Expo</h2>
-        <p className="mt-4 max-w-3xl text-slate-600 leading-relaxed">
-          GreenRise Expo brings together students, entrepreneurs, investors, corporate professionals,
-          NGOs and environmental experts for four days of exhibitions, workshops, pitch sessions and
-          meaningful connections. Join us to turn ideas into action.
-        </p>
-        <Link href="/about" className="mt-4 inline-block text-sm font-medium text-teal-700 hover:underline">
-          Read full about →
-        </Link>
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-lg">
+            <Image
+              src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80"
+              alt="Wind turbines and renewable energy"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">About the Expo</h2>
+            <p className="mt-4 text-slate-600 leading-relaxed">
+              GreenRise Expo brings together students, entrepreneurs, investors, corporate professionals,
+              NGOs and environmental experts for four days of exhibitions, workshops, pitch sessions and
+              meaningful connections. Join us to turn ideas into action.
+            </p>
+            <Link href="/about" className="mt-4 inline-block text-sm font-medium text-teal-700 hover:underline">
+              Read full about →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Image strip */}
+      <section className="border-y border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-1 md:grid-cols-4">
+          <div className="relative aspect-[4/3]">
+            <Image
+              src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=600&q=80"
+              alt="Solar panels"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="relative aspect-[4/3]">
+            <Image
+              src="https://images.unsplash.com/photo-1532996122723-e8e714c57e2a?auto=format&fit=crop&w=600&q=80"
+              alt="Green technology conference"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="relative aspect-[4/3]">
+            <Image
+              src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=600&q=80"
+              alt="Sustainable farming"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="relative aspect-[4/3]">
+            <Image
+              src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80"
+              alt="Eco-friendly innovation"
+              fill
+              className="object-cover"
+            />
+          </div>
+        </div>
       </section>
 
       {/* Speakers preview */}
@@ -157,9 +218,18 @@ export default async function HomePage() {
       )}
 
       {/* CTA */}
-      <section className="bg-teal-900 py-16 text-white">
-        <div className="mx-auto max-w-6xl px-4 text-center">
-          <h2 className="text-2xl font-bold">Ready to be part of the change?</h2>
+      <section className="relative overflow-hidden py-20 text-white">
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80"
+            alt="Green forest path"
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-teal-900/85" />
+        </div>
+        <div className="relative mx-auto max-w-6xl px-4 text-center">
+          <h2 className="text-2xl font-bold md:text-3xl">Ready to be part of the change?</h2>
           <p className="mt-3 text-teal-100">Secure your spot. Early registration is encouraged.</p>
           <Link
             href="/register"
