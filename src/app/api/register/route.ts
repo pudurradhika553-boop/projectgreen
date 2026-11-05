@@ -29,9 +29,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const event = await prisma.event.findFirst({ where: { isPublished: true } });
+    let event = await prisma.event.findFirst({ where: { isPublished: true } });
     if (!event) {
-      return NextResponse.json({ error: "No published event found." }, { status: 404 });
+      // Create a default published event if none exists (schema was just pushed, seed not run)
+      event = await prisma.event.create({
+        data: {
+          name: "GreenRise Expo 2027",
+          tagline: "Growing Towards Sustainability",
+          description:
+            "A four-day platform for entrepreneurs, start-ups and social enterprises to showcase solutions that address real-world social and environmental challenges.",
+          theme: "Where Innovation Meets Impact",
+          startDate: new Date("2027-02-23T00:00:00+05:30"),
+          endDate: new Date("2027-02-26T23:59:59+05:30"),
+          venueName: "Pune International Exhibition and Convention Centre (PIECC)",
+          venueAddress: "Moshi, Pune, Maharashtra",
+          organizerName: "GreenRise Expo Organizing Committee",
+          primaryColor: "#0f766e",
+          secondaryColor: "#134e4a",
+          isPublished: true,
+        },
+      });
     }
 
     // Resolve ticket type: use provided id, otherwise pick first open non-invite type
