@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function VenuePage() {
   return (
@@ -23,7 +24,17 @@ export default function VenuePage() {
         <h1 className="text-3xl font-bold text-slate-900">Venue & Location</h1>
         <p className="mt-2 text-slate-500">Where Innovation Meets Impact</p>
 
-        <div className="mt-10 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-8 relative aspect-[16/9] overflow-hidden rounded-2xl shadow-lg">
+          <Image
+            src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80"
+            alt="Modern exhibition and convention centre"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+
+        <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">
             Pune International Exhibition and Convention Centre (PIECC)
           </h2>
