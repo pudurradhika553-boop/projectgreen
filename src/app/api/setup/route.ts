@@ -22,13 +22,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { name, email, password } = body || {};
 
-    // If users already exist we still allow creating the missing Event + TicketType
+    // If users already exist we still allow creating the missing Event + TicketType + Speakers
     if (existingUsers > 0) {
-      const result = await ensureEventAndTicketType(email);
+      const result = await ensureEventTicketAndSpeakers(email);
       if (result.created) {
         return NextResponse.json({
           success: true,
-          message: "Event and ticket type created successfully. You can now register attendees.",
+          message: "Event, ticket type and speakers created successfully. You can now register attendees.",
           eventId: result.eventId,
         });
       }
@@ -67,11 +67,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const result = await ensureEventAndTicketType(email);
+    const result = await ensureEventTicketAndSpeakers(email);
 
     return NextResponse.json({
       success: true,
-      message: "Super Admin created successfully. Event and ticket type are ready.",
+      message: "Super Admin created successfully. Event, ticket type and speakers are ready.",
       userId: user.id,
       eventId: result.eventId,
     });
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function ensureEventAndTicketType(organizerEmail?: string) {
+async function ensureEventTicketAndSpeakers(organizerEmail?: string) {
   let event = await prisma.event.findFirst();
   let created = false;
 
@@ -123,6 +123,7 @@ async function ensureEventAndTicketType(organizerEmail?: string) {
     created = true;
   }
 
+  // Default ticket type
   const existingTicket = await prisma.ticketType.findFirst({
     where: { eventId: event.id, isOpen: true },
   });
@@ -141,6 +142,46 @@ async function ensureEventAndTicketType(organizerEmail?: string) {
       },
     });
     created = true;
+  }
+
+  // Announced speakers
+  const speakers = [
+    {
+      name: "Dr. Raghunath Mashelkar",
+      title: "Renowned Scientist & Innovation Leader",
+      sortOrder: 1,
+      isFeatured: true,
+    },
+    {
+      name: "Anand Chordia",
+      title: "Entrepreneur & Industry Leader",
+      sortOrder: 2,
+      isFeatured: true,
+    },
+    {
+      name: "Ravi Pandit",
+      title: "Technology & Business Leader",
+      sortOrder: 3,
+      isFeatured: true,
+    },
+  ];
+
+  for (const s of speakers) {
+    const exists = await prisma.speaker.findFirst({
+      where: { eventId: event.id, name: s.name },
+    });
+    if (!exists) {
+      await prisma.speaker.create({
+        data: {
+          eventId: event.id,
+          name: s.name,
+          title: s.title,
+          sortOrder: s.sortOrder,
+          isFeatured: s.isFeatured,
+        },
+      });
+      created = true;
+    }
   }
 
   return { eventId: event.id, created };
